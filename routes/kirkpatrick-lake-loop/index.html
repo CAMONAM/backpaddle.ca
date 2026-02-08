@@ -216,6 +216,29 @@
         ];
         let campsites = JSON.parse(localStorage.getItem('kirkpatrick-campsites')) || defaultCampsites;
         
+        // Default portages
+        const defaultPortages = [
+            {startLat:46.750212,startLng:-83.143201,endLat:46.750580,endLng:-83.140615,distM:201},
+            {startLat:46.749499,startLng:-83.136452,endLat:46.746823,endLng:-83.137426,distM:307},
+            {startLat:46.741963,startLng:-83.134945,endLat:46.738044,endLng:-83.134146,distM:440},
+            {startLat:46.734559,startLng:-83.143303,endLat:46.733728,endLng:-83.143077,distM:94},
+            {startLat:46.726109,startLng:-83.171976,endLat:46.717666,endLng:-83.168843,distM:969},
+            {startLat:46.703115,startLng:-83.168821,endLat:46.687838,endLng:-83.161225,distM:1795},
+            {startLat:46.680816,startLng:-83.132901,endLat:46.674861,endLng:-83.111969,distM:1729},
+            {startLat:46.676702,startLng:-83.099985,endLat:46.682487,endLng:-83.104444,distM:721},
+            {startLat:46.704807,startLng:-83.099256,endLat:46.705384,endLng:-83.096788,distM:199},
+            {startLat:46.705737,startLng:-83.095511,endLat:46.707794,endLng:-83.091488,distM:383},
+            {startLat:46.706698,startLng:-83.083066,endLat:46.705829,endLng:-83.083736,distM:109},
+            {startLat:46.704969,startLng:-83.082304,endLat:46.699496,endLng:-83.068622,distM:1208},
+            {startLat:46.708574,startLng:-83.047543,endLat:46.709688,endLng:-83.046116,distM:165},
+            {startLat:46.733243,startLng:-83.065546,endLat:46.729566,endLng:-83.068786,distM:478},
+            {startLat:46.729184,startLng:-83.070202,endLat:46.729801,endLng:-83.076108,distM:455},
+            {startLat:46.727610,startLng:-83.080067,endLat:46.726323,endLng:-83.081092,distM:163},
+            {startLat:46.735695,startLng:-83.107806,endLat:46.737978,endLng:-83.114480,distM:568},
+            {startLat:46.737166,startLng:-83.124168,endLat:46.736500,endLng:-83.125058,distM:100},
+        ];
+        let portages = JSON.parse(localStorage.getItem('kirkpatrick-portages')) || defaultPortages;
+        
         // Map setup
         const cyclosm = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {subdomains: 'abc', maxZoom: 20});
         const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {maxZoom: 17});
@@ -422,27 +445,6 @@
         }
         
         // --- Portage system ---
-        const defaultPortages = [
-            {startLat:46.750212,startLng:-83.143201,endLat:46.750580,endLng:-83.140615,distM:201},
-            {startLat:46.749499,startLng:-83.136452,endLat:46.746823,endLng:-83.137426,distM:307},
-            {startLat:46.741963,startLng:-83.134945,endLat:46.738044,endLng:-83.134146,distM:440},
-            {startLat:46.734559,startLng:-83.143303,endLat:46.733728,endLng:-83.143077,distM:94},
-            {startLat:46.726109,startLng:-83.171976,endLat:46.717666,endLng:-83.168843,distM:969},
-            {startLat:46.703115,startLng:-83.168821,endLat:46.687838,endLng:-83.161225,distM:1795},
-            {startLat:46.680816,startLng:-83.132901,endLat:46.674861,endLng:-83.111969,distM:1729},
-            {startLat:46.676702,startLng:-83.099985,endLat:46.682487,endLng:-83.104444,distM:721},
-            {startLat:46.704807,startLng:-83.099256,endLat:46.705384,endLng:-83.096788,distM:199},
-            {startLat:46.705737,startLng:-83.095511,endLat:46.707794,endLng:-83.091488,distM:383},
-            {startLat:46.706698,startLng:-83.083066,endLat:46.705829,endLng:-83.083736,distM:109},
-            {startLat:46.704969,startLng:-83.082304,endLat:46.699496,endLng:-83.068622,distM:1208},
-            {startLat:46.708574,startLng:-83.047543,endLat:46.709688,endLng:-83.046116,distM:165},
-            {startLat:46.733243,startLng:-83.065546,endLat:46.729566,endLng:-83.068786,distM:478},
-            {startLat:46.729184,startLng:-83.070202,endLat:46.729801,endLng:-83.076108,distM:455},
-            {startLat:46.727610,startLng:-83.080067,endLat:46.726323,endLng:-83.081092,distM:163},
-            {startLat:46.735695,startLng:-83.107806,endLat:46.737978,endLng:-83.114480,distM:568},
-            {startLat:46.737166,startLng:-83.124168,endLat:46.736500,endLng:-83.125058,distM:100},
-        ];
-        let portages = JSON.parse(localStorage.getItem('kirkpatrick-portages')) || defaultPortages;
         let portageMode = false;
         let portageStart = null;
         const portageLayer = L.layerGroup().addTo(map);
