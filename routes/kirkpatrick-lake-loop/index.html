@@ -60,6 +60,14 @@
         .layer-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 500; }
         
         .leaflet-top { top: 55px !important; }
+        .north-arrow {
+            position: absolute; top: 65px; right: 15px; z-index: 1000;
+            width: 36px; height: 36px; background: rgba(255,255,255,0.9);
+            border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.3); color: #333; line-height: 1;
+        }
+        .north-arrow span:first-child { font-size: 12px; margin-top: 2px; color: #d32f2f; }
+        .north-arrow span:last-child { font-size: 10px; font-weight: 700; margin-top: -2px; }
         .lake-label { background: rgba(33, 150, 243, 0.9); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .campsite-marker { font-size: 22px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
         .distance-marker { background: #FF5722; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; font-size: 9px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
@@ -100,6 +108,7 @@
     </div>
     
     <div id="map"></div>
+    <div class="north-arrow"><span>▲</span><span>N</span></div>
     
     <div class="edit-banner" id="editBanner">🏕️ Tap map to add campsite</div>
     
@@ -175,6 +184,7 @@
         
         const map = L.map('map', {center: [46.72, -83.12], zoom: 11, layers: [cyclosm], zoomControl: false});
         L.control.zoom({position: 'topleft'}).addTo(map);
+        L.control.scale({imperial: false, position: 'bottomleft'}).addTo(map);
         
         // Route line
         L.polyline(routeCoords, {color: '#FF5722', weight: 4, opacity: 0.8}).addTo(map);
