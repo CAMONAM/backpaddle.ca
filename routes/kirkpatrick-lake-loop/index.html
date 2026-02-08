@@ -70,6 +70,7 @@
         .north-arrow span:last-child { font-size: 10px; font-weight: 700; margin-top: -2px; }
         .lake-label { background: rgba(33, 150, 243, 0.9); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .campsite-marker { font-size: 22px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+        .campsite-number { background: #f59e0b; color: #000; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 22px; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .distance-marker { background: #FF5722; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; font-size: 9px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .start-marker { background: #4CAF50; width: 24px; height: 24px; line-height: 24px; }
         .end-marker { background: #f44336; width: 24px; height: 24px; line-height: 24px; }
@@ -219,7 +220,7 @@
         function renderCampsites() {
             campsiteLayer.clearLayers();
             campsites.forEach((site, i) => {
-                const icon = L.divIcon({className: '', html: `<div class="campsite-marker">🏕️</div>`, iconSize: [24, 24], iconAnchor: [12, 12]});
+                const icon = L.divIcon({className: '', html: `<div class="campsite-number">${i+1}</div>`, iconSize: [22, 22], iconAnchor: [11, 11]});
                 L.marker([site.lat, site.lng], {icon}).bindPopup(`<strong>${site.name}</strong><br><small>${site.lat.toFixed(6)}, ${site.lng.toFixed(6)}</small>`).addTo(campsiteLayer);
             });
             updateCampsiteList();
