@@ -111,6 +111,7 @@
     <div class="north-arrow"><span>▲</span><span>N</span></div>
     
     <div class="edit-banner" id="editBanner">🏕️ Tap map to add campsite</div>
+    <div class="edit-banner" id="portageBanner">🥾 Tap START of portage</div>
     
     <div class="info-panel" id="infoPanel">
         <div class="panel-handle" onclick="togglePanel()"></div>
@@ -124,6 +125,7 @@
                 <a href="route.gpx" download class="btn">📥 GPX</a>
                 <a href="../../field-maps/kirkpatrick-lake-loop-field-map.pdf" download class="btn secondary">🗺️ Field Map</a>
                 <button class="btn" id="editBtn" onclick="toggleEditMode()">🏕️ Add Sites</button>
+                <button class="btn" id="portageBtn" onclick="togglePortageMode()">🥾 Add Portage</button>
             </div>
             
             <div class="layer-toggle">
@@ -136,6 +138,12 @@
                 <h3>🏕️ Campsites</h3>
                 <div id="campsiteItems"></div>
                 <div class="export-box" id="exportBox" style="display:none;"></div>
+            </div>
+            
+            <div class="campsite-list" id="portageList">
+                <h3>🥾 Portages</h3>
+                <div id="portageItems"></div>
+                <div class="export-box" id="portageExportBox" style="display:none;"></div>
             </div>
         </div>
     </div>
@@ -285,8 +293,92 @@
             document.getElementById('infoPanel').classList.toggle('collapsed');
         }
         
+        // --- Portage system ---
+        let portages = JSON.parse(localStorage.getItem('kirkpatrick-portages')) || [];
+        let portageMode = false;
+        let portageStart = null;
+        const portageLayer = L.layerGroup().addTo(map);
+        
+        function haversineM(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        
+        function togglePortageMode() {
+            portageMode = !portageMode;
+            portageStart = null;
+            if (portageMode && editMode) { toggleEditMode(); }
+            document.getElementById('portageBtn').classList.toggle('active', portageMode);
+            document.getElementById('portageBanner').classList.toggle('show', portageMode);
+            if (portageMode) document.getElementById('portageBanner').textContent = '🥾 Tap START of portage';
+        }
+        
+        function renderPortages() {
+            portageLayer.clearLayers();
+            portages.forEach((p, i) => {
+                const line = L.polyline([[p.startLat, p.startLng], [p.endLat, p.endLng]], {
+                    color: '#ef4444', weight: 3, dashArray: '8, 6', opacity: 0.9
+                }).bindPopup(`<strong>Portage ${i+1}</strong><br>${p.distM}m`).addTo(portageLayer);
+                // Midpoint label
+                const midLat = (p.startLat + p.endLat) / 2, midLng = (p.startLng + p.endLng) / 2;
+                const icon = L.divIcon({className: '', html: `<div style="background:#ef4444;color:white;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;white-space:nowrap;">${p.distM}m</div>`, iconSize: [50,16], iconAnchor: [25,8]});
+                L.marker([midLat, midLng], {icon}).addTo(portageLayer);
+            });
+            updatePortageList();
+            localStorage.setItem('kirkpatrick-portages', JSON.stringify(portages));
+        }
+        
+        function updatePortageList() {
+            const container = document.getElementById('portageItems');
+            const exportBox = document.getElementById('portageExportBox');
+            if (portages.length === 0) {
+                container.innerHTML = '<p style="color:#999;font-size:12px;">No portages yet. Tap "Add Portage" then tap start & end points.</p>';
+                exportBox.style.display = 'none';
+                return;
+            }
+            container.innerHTML = portages.map((p, i) => `
+                <div class="campsite-item">
+                    <span>🥾 Portage ${i+1} (${p.distM}m)</span>
+                    <button class="delete-btn" onclick="deletePortage(${i})">✕</button>
+                </div>
+            `).join('');
+            exportBox.style.display = 'block';
+            exportBox.textContent = portages.map((p,i) => `Portage ${i+1}: ${p.startLat.toFixed(6)},${p.startLng.toFixed(6)} → ${p.endLat.toFixed(6)},${p.endLng.toFixed(6)} (${p.distM}m)`).join('\n');
+        }
+        
+        function deletePortage(index) {
+            portages.splice(index, 1);
+            renderPortages();
+        }
+        
+        // Override map click to handle both modes
+        map.off('click');
+        map.on('click', function(e) {
+            if (editMode) {
+                campsites.push({ lat: e.latlng.lat, lng: e.latlng.lng, name: `Campsite ${campsites.length + 1}` });
+                renderCampsites();
+            } else if (portageMode) {
+                if (!portageStart) {
+                    portageStart = { lat: e.latlng.lat, lng: e.latlng.lng };
+                    document.getElementById('portageBanner').textContent = '🥾 Now tap END of portage';
+                    // Temp marker
+                    portageLayer._tempMarker = L.circleMarker([e.latlng.lat, e.latlng.lng], {radius: 6, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1}).addTo(portageLayer);
+                } else {
+                    const distM = Math.round(haversineM(portageStart.lat, portageStart.lng, e.latlng.lat, e.latlng.lng));
+                    portages.push({ startLat: portageStart.lat, startLng: portageStart.lng, endLat: e.latlng.lat, endLng: e.latlng.lng, distM });
+                    if (portageLayer._tempMarker) { portageLayer.removeLayer(portageLayer._tempMarker); }
+                    portageStart = null;
+                    document.getElementById('portageBanner').textContent = '🥾 Tap START of portage';
+                    renderPortages();
+                }
+            }
+        });
+        
         // Init
         renderCampsites();
+        renderPortages();
         if (window.innerWidth < 600) {
             document.getElementById('infoPanel').classList.add('collapsed');
         }
