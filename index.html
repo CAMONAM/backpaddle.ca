@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backpaddle — Ontario Canoe Routes</title>
+    <meta name="description" content="Hand-picked canoe routes across Ontario with interactive maps, GPX downloads, and trip details.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0f0d;
+            --card: #141a17;
+            --card-hover: #1a221e;
+            --accent: #4ade80;
+            --accent-dim: #22c55e;
+            --text: #f0fdf4;
+            --text-dim: #94a3b8;
+            --border: #1e293b;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+        
+        .hero {
+            padding: 80px 20px 60px;
+            text-align: center;
+            background: linear-gradient(180deg, #0f1a14 0%, var(--bg) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .logo { font-size: 3rem; margin-bottom: 10px; }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+        h1 span { color: var(--accent); }
+        
+        .tagline {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+        
+        .routes { display: grid; gap: 16px; }
+        
+        .route-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.2s ease;
+            display: block;
+        }
+        .route-card:hover {
+            background: var(--card-hover);
+            border-color: var(--accent-dim);
+            transform: translateY(-2px);
+        }
+        
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 12px;
+        }
+        
+        .route-card h2 { font-size: 1.25rem; font-weight: 600; }
+        
+        .route-region {
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: rgba(74, 222, 128, 0.15);
+            color: var(--accent);
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        
+        .route-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+        }
+        
+        .route-desc {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+        footer a { color: var(--accent); text-decoration: none; }
+        
+        @media (max-width: 500px) {
+            .hero { padding: 60px 20px 40px; }
+            h1 { font-size: 2rem; }
+            .logo { font-size: 2.5rem; }
+            .route-header { flex-direction: column; gap: 8px; }
+            .route-stats { flex-wrap: wrap; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <div class="logo"><img src="assets/backpaddle-logo.png" alt="Backpaddle" style="height: 120px; width: auto;"></div>
+        <h1>Back<span>paddle</span></h1>
+        <p class="tagline">Hand-picked canoe routes across Ontario — maps, GPX tracks & trip intel</p>
+    </header>
+
+    <main class="container">
+        <h3 class="section-title">Routes</h3>
+        
+        <div class="routes">
+            <a href="routes/kirkpatrick-lake-loop/" class="route-card">
+                <div class="route-header">
+                    <h2>Kirkpatrick Lake Loop</h2>
+                    <span class="route-region">Algoma</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 77 km</span>
+                    <span>🏕️ 5 nights</span>
+                    <span>🎣 Lakers, Brookies & Rainbows</span>
+                </div>
+                <p class="route-desc">Remote loop through Algoma backcountry — Crazy Lake, White Bear Lake, Kirkpatrick Lake. Excellent fishing, minimal portages, zero crowds.</p>
+            </a>
+            
+            <a href="routes/marten-river/" class="route-card">
+                <div class="route-header">
+                    <h2>Marten River</h2>
+                    <span class="route-region">Temagami</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 51 km</span>
+                    <span>📅 Sep 2022</span>
+                </div>
+                <p class="route-desc">Multi-day paddle through Marten River Provincial Park.</p>
+            </a>
+            
+            <a href="routes/bushwhacking-jaunt/" class="route-card">
+                <div class="route-header">
+                    <h2>Canoe Bushwhacking Jaunt</h2>
+                    <span class="route-region">Ontario</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 47 km</span>
+                    <span>📅 Jul 2022</span>
+                </div>
+                <p class="route-desc">Off-the-beaten-path adventure through remote waterways.</p>
+            </a>
+            
+            <a href="routes/moon-river-bala/" class="route-card">
+                <div class="route-header">
+                    <h2>Moon River — Bala to Georgian Bay</h2>
+                    <span class="route-region">Muskoka</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 41 km</span>
+                    <span>📅 Sep 2022</span>
+                </div>
+                <p class="route-desc">The Moon River slog from Bala out to the big water of Georgian Bay.</p>
+            </a>
+            
+            <a href="routes/barron-canyon/" class="route-card">
+                <div class="route-header">
+                    <h2>Barron Canyon</h2>
+                    <span class="route-region">Algonquin</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 27 km</span>
+                    <span>🚧 14 portages</span>
+                    <span>📅 Oct 2022</span>
+                </div>
+                <p class="route-desc">Through Algonquin's iconic canyon — 14 portages in the rain.</p>
+            </a>
+            
+            <a href="routes/indys-first-solo/" class="route-card">
+                <div class="route-header">
+                    <h2>Indy's First Solo Trip 🐕</h2>
+                    <span class="route-region">Ontario</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 26 km</span>
+                    <span>📅 Aug 2022</span>
+                </div>
+                <p class="route-desc">The pup's first time riding solo in the bow.</p>
+            </a>
+            
+            <a href="routes/weekender-to-birch/" class="route-card">
+                <div class="route-header">
+                    <h2>Weekender to Birch</h2>
+                    <span class="route-region">Ontario</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 25 km</span>
+                    <span>📅 Sep 2022</span>
+                </div>
+                <p class="route-desc">Quick weekend paddle out to Birch Lake.</p>
+            </a>
+            
+            <a href="routes/islet-lake-algonquin/" class="route-card">
+                <div class="route-header">
+                    <h2>Islet Lake — Algonquin Fall</h2>
+                    <span class="route-region">Algonquin</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 22 km</span>
+                    <span>📅 Oct 2022</span>
+                </div>
+                <p class="route-desc">Fall colours paddle through Algonquin Park to Islet Lake.</p>
+            </a>
+            
+            <a href="routes/algonquin-manitou/" class="route-card">
+                <div class="route-header">
+                    <h2>Algonquin — Manitou Lake</h2>
+                    <span class="route-region">Algonquin</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 45 km</span>
+                    <span>📅 Aug 2021</span>
+                </div>
+                <p class="route-desc">Multi-day trip to Manitou Lake and back.</p>
+            </a>
+            
+            <a href="routes/don-valley-whitewater/" class="route-card">
+                <div class="route-header">
+                    <h2>Don Valley River — Whitewater</h2>
+                    <span class="route-region">Toronto</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 28 km</span>
+                    <span>🌊 Whitewater</span>
+                    <span>📅 May 2024</span>
+                </div>
+                <p class="route-desc">Whitewater paddle down the Don Valley.</p>
+            </a>
+            
+            <a href="routes/temagami-2021/" class="route-card">
+                <div class="route-header">
+                    <h2>Temagami 2021</h2>
+                    <span class="route-region">Temagami</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 20 km</span>
+                    <span>📅 Sep 2021</span>
+                </div>
+                <p class="route-desc">Out and back trip through Temagami.</p>
+            </a>
+            
+            <a href="routes/tilden-lake/" class="route-card">
+                <div class="route-header">
+                    <h2>Tilden Lake</h2>
+                    <span class="route-region">Ontario</span>
+                </div>
+                <div class="route-stats">
+                    <span>📏 28 km</span>
+                    <span>📅 Jun-Jul 2024</span>
+                </div>
+                <p class="route-desc">Multi-day trip to Tilden Lake.</p>
+            </a>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built by paddlers 🍁 · <a href="https://github.com/CAMONAM/backpaddle.ca">GitHub</a></p>
+    </footer>
+</body>
+</html>
