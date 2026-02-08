@@ -66,7 +66,6 @@
             <div class="layer-toggle">
                 <button class="layer-btn active" data-layer="topo">Topo</button>
                 <button class="layer-btn" data-layer="satellite">Satellite</button>
-                <button class="layer-btn" data-layer="street">Street</button>
             </div>
         </div>
     </div>
@@ -77,8 +76,7 @@
         const cyclosm = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {subdomains: 'abc', maxZoom: 20});
         const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {maxZoom: 17});
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom: 18});
-        const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19});
-        const layers = {cyclosm, topo, satellite, street};
+        const layers = {cyclosm, topo, satellite};
         let currentLayer = 'topo';
         const map = L.map('map', {center: [45.548460000000006, -80.223138], zoom: 12, layers: [topo], zoomControl: false});
         L.control.zoom({position: 'topleft'}).addTo(map);
