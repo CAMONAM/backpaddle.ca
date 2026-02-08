@@ -311,67 +311,8 @@
         // Initialize photo markers
         createPhotoMarkers();
         
-        // Route line - color by paddle (blue) vs portage (red)
-        function nearPoint(coord, point, threshold) {
-            const dlat = coord[0] - point[0], dlng = coord[1] - point[1];
-            return Math.sqrt(dlat*dlat + dlng*dlng) < threshold;
-        }
-        
-        // Build portage zones from defaultPortages
-        const portageZones = defaultPortages.map(p => ({
-            start: [p.startLat, p.startLng],
-            end: [p.endLat, p.endLng]
-        }));
-        
-        // Classify each route point as portage or paddle
-        const T = 0.002; // ~200m threshold for matching
-        let segments = [];
-        let currentSeg = [routeCoords[0]];
-        let inPortage = false;
-        
-        for (let i = 1; i < routeCoords.length; i++) {
-            const pt = routeCoords[i];
-            let isPortage = false;
-            
-            for (const pz of portageZones) {
-                // Check if point is near the line between portage start and end
-                const minLat = Math.min(pz.start[0], pz.end[0]) - T;
-                const maxLat = Math.max(pz.start[0], pz.end[0]) + T;
-                const minLng = Math.min(pz.start[1], pz.end[1]) - T;
-                const maxLng = Math.max(pz.start[1], pz.end[1]) + T;
-                if (pt[0] >= minLat && pt[0] <= maxLat && pt[1] >= minLng && pt[1] <= maxLng) {
-                    // Point-to-line distance check
-                    const dx = pz.end[0] - pz.start[0], dy = pz.end[1] - pz.start[1];
-                    const len2 = dx*dx + dy*dy;
-                    if (len2 > 0) {
-                        const t = Math.max(0, Math.min(1, ((pt[0]-pz.start[0])*dx + (pt[1]-pz.start[1])*dy) / len2));
-                        const projLat = pz.start[0] + t*dx, projLng = pz.start[1] + t*dy;
-                        const dist = Math.sqrt((pt[0]-projLat)**2 + (pt[1]-projLng)**2);
-                        if (dist < T) { isPortage = true; break; }
-                    }
-                }
-            }
-            
-            if (isPortage !== inPortage) {
-                // Transition — close current segment and start new one
-                currentSeg.push(pt);
-                segments.push({ points: currentSeg, portage: inPortage });
-                currentSeg = [pt];
-                inPortage = isPortage;
-            } else {
-                currentSeg.push(pt);
-            }
-        }
-        if (currentSeg.length > 1) segments.push({ points: currentSeg, portage: inPortage });
-        
-        // Draw segments
-        segments.forEach(seg => {
-            if (seg.portage) {
-                L.polyline(seg.points, {color: '#ef4444', weight: 5, opacity: 0.95, dashArray: '8, 6'}).addTo(map);
-            } else {
-                L.polyline(seg.points, {color: '#22d3ee', weight: 5, opacity: 0.9}).addTo(map);
-            }
-        });
+        // Route line - simple blue, portages drawn separately as overlay
+        L.polyline(routeCoords, {color: '#FF5722', weight: 4, opacity: 0.8}).addTo(map);
         
         // Distance markers
         waypoints.forEach(wp => {
