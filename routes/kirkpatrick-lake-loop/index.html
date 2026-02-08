@@ -148,6 +148,8 @@
                 <button class="layer-btn active" data-layer="cyclosm">CyclOSM</button>
                 <button class="layer-btn" data-layer="topo">Topo</button>
                 <button class="layer-btn" data-layer="satellite">Satellite</button>
+                <button class="layer-btn active" id="campsiteToggle">🔺 Campsites</button>
+                <button class="layer-btn active" id="portageToggle">🥾 Portages</button>
                 <button class="layer-btn" id="photoToggle">📷 Photos</button>
             </div>
             
@@ -426,10 +428,9 @@
         // Layer switching
         document.querySelectorAll('.layer-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                if (btn.id === 'photoToggle') {
-                    togglePhotoLayer();
-                    return;
-                }
+                if (btn.id === 'photoToggle') { togglePhotoLayer(); return; }
+                if (btn.id === 'campsiteToggle') { toggleCampsiteLayer(); return; }
+                if (btn.id === 'portageToggle') { togglePortageLayer(); return; }
                 document.querySelectorAll('.layer-btn[data-layer]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 map.removeLayer(layers[currentLayer]);
@@ -437,6 +438,40 @@
                 currentLayer = btn.dataset.layer;
             });
         });
+        
+        // Campsite toggle
+        let showCampsites = true;
+        function toggleCampsiteLayer() {
+            showCampsites = !showCampsites;
+            const btn = document.getElementById('campsiteToggle');
+            const panel = document.getElementById('campsiteList');
+            if (showCampsites) {
+                map.addLayer(campsiteLayer);
+                btn.classList.add('active');
+                panel.style.display = '';
+            } else {
+                map.removeLayer(campsiteLayer);
+                btn.classList.remove('active');
+                panel.style.display = 'none';
+            }
+        }
+        
+        // Portage toggle
+        let showPortages = true;
+        function togglePortageLayer() {
+            showPortages = !showPortages;
+            const btn = document.getElementById('portageToggle');
+            const panel = document.getElementById('portageList');
+            if (showPortages) {
+                map.addLayer(portageLayer);
+                btn.classList.add('active');
+                panel.style.display = '';
+            } else {
+                map.removeLayer(portageLayer);
+                btn.classList.remove('active');
+                panel.style.display = 'none';
+            }
+        }
         
         // Photo toggle handled in layer-btn loop above
         
