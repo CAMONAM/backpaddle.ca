@@ -336,8 +336,46 @@
         // Initialize photo markers
         createPhotoMarkers();
         
-        // Route line - simple blue, portages drawn separately as overlay
-        L.polyline(routeCoords, {color: '#3b82f6', weight: 4, opacity: 0.8}).addTo(map);
+        // Color-coded route: blue = paddle, orange dashed = portage
+        const paddleRouteLayer = L.layerGroup().addTo(map);
+        const portageRouteLayer = L.layerGroup().addTo(map);
+        
+        function nearestRouteIndex(lat, lng) {
+            let minDist = Infinity, minIdx = 0;
+            for (let i = 0; i < routeCoords.length; i++) {
+                const d = (routeCoords[i][0]-lat)**2 + (routeCoords[i][1]-lng)**2;
+                if (d < minDist) { minDist = d; minIdx = i; }
+            }
+            return minIdx;
+        }
+        
+        function buildColoredRoute() {
+            paddleRouteLayer.clearLayers();
+            portageRouteLayer.clearLayers();
+            const isPortage = new Uint8Array(routeCoords.length);
+            portages.forEach(p => {
+                const si = nearestRouteIndex(p.startLat, p.startLng);
+                const ei = nearestRouteIndex(p.endLat, p.endLng);
+                const from = Math.min(si, ei), to = Math.max(si, ei);
+                for (let i = from; i <= to; i++) isPortage[i] = 1;
+            });
+            let segStart = 0;
+            for (let i = 1; i <= routeCoords.length; i++) {
+                if (i === routeCoords.length || isPortage[i] !== isPortage[segStart]) {
+                    const end = Math.min(i, routeCoords.length - 1);
+                    const coords = routeCoords.slice(segStart, end + 1);
+                    if (coords.length >= 2) {
+                        if (isPortage[segStart]) {
+                            L.polyline(coords, {color: '#f97316', weight: 5, opacity: 0.9, dashArray: '8,6'}).addTo(portageRouteLayer);
+                        } else {
+                            L.polyline(coords, {color: '#3b82f6', weight: 4, opacity: 0.8}).addTo(paddleRouteLayer);
+                        }
+                    }
+                    segStart = i;
+                }
+            }
+        }
+        buildColoredRoute();
         
         // Distance markers
         waypoints.forEach(wp => {
@@ -448,15 +486,15 @@
             if (showCampsites) {
                 map.addLayer(campsiteLayer);
                 btn.classList.add('active');
-                panel.style.display = '';
+                if (panel) panel.style.display = '';
             } else {
                 map.removeLayer(campsiteLayer);
                 btn.classList.remove('active');
-                panel.style.display = 'none';
+                if (panel) panel.style.display = 'none';
             }
         }
         
-        // Portage toggle
+        // Portage toggle - controls both overlay lines AND route coloring
         let showPortages = true;
         function togglePortageLayer() {
             showPortages = !showPortages;
@@ -464,12 +502,14 @@
             const panel = document.getElementById('portageList');
             if (showPortages) {
                 map.addLayer(portageLayer);
+                map.addLayer(portageRouteLayer);
                 btn.classList.add('active');
-                panel.style.display = '';
+                if (panel) panel.style.display = '';
             } else {
                 map.removeLayer(portageLayer);
+                map.removeLayer(portageRouteLayer);
                 btn.classList.remove('active');
-                panel.style.display = 'none';
+                if (panel) panel.style.display = 'none';
             }
         }
         
@@ -515,6 +555,7 @@
             });
             updatePortageList();
             localStorage.setItem('kirkpatrick-portages', JSON.stringify(portages));
+            if (typeof buildColoredRoute === 'function') buildColoredRoute();
         }
         
         function updatePortageList() {
