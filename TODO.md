@@ -31,6 +31,11 @@
 - [ ] GitHub Pages caching — consider Cloudflare Pages for faster deploys
 - [ ] Make repo private (needs paid GitHub or switch to Cloudflare/Netlify)
 
+## ⌚ Garmin
+- [ ] Fenix activity app for canoe trips — track paddle/portage transitions
+- [ ] Auto-detect mode switches (paddling vs carrying)
+- [ ] Export portage segments to feed into Backpaddle maps
+
 ## 💡 Ideas
 - [ ] Campsite reviews / notes per site
 - [ ] Fish species per lake
