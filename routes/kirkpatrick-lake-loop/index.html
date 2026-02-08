@@ -339,6 +339,7 @@
         // Color-coded route: blue = paddle, orange dashed = portage
         const paddleRouteLayer = L.layerGroup().addTo(map);
         const portageRouteLayer = L.layerGroup().addTo(map);
+        const portageLabelLayer = L.layerGroup().addTo(map);
         
         function nearestRouteIndex(lat, lng) {
             let minDist = Infinity, minIdx = 0;
@@ -360,6 +361,7 @@
         function buildColoredRoute() {
             paddleRouteLayer.clearLayers();
             portageRouteLayer.clearLayers();
+            portageLabelLayer.clearLayers();
             // Tag each point with portage index (-1 = paddle)
             const portageId = new Int8Array(routeCoords.length).fill(-1);
             const portageIndices = []; // [{from, to, idx}]
@@ -387,7 +389,7 @@
                             const dot = L.divIcon({className: '', html: '', iconSize: [1,1], iconAnchor: [0,0]});
                             L.marker(midPt, {icon: dot})
                                 .bindTooltip(`${distM}m`, {permanent: true, direction: pIdx % 2 === 0 ? 'right' : 'left', offset: [8, 0], className: 'portage-callout'})
-                                .addTo(portageRouteLayer);
+                                .addTo(portageLabelLayer);
                         } else {
                             L.polyline(coords, {color: '#3b82f6', weight: 4, opacity: 0.8}).addTo(paddleRouteLayer);
                         }
@@ -413,20 +415,27 @@
             L.marker([lake.lat, lake.lng], {icon}).addTo(map);
         });
         
-        // Campsite layer
+        // Campsite layer (dots + icons stay on map, labels on separate layer)
         const campsiteLayer = L.layerGroup().addTo(map);
+        const campsiteLabelLayer = L.layerGroup().addTo(map);
         
         function renderCampsites() {
             campsiteLayer.clearLayers();
+            campsiteLabelLayer.clearLayers();
             const dirs = ['right','left','right','left','right','left','right','left'];
             campsites.forEach((site, i) => {
                 const dot = L.divIcon({className: '', html: `<div class="campsite-dot"></div>`, iconSize: [8, 8], iconAnchor: [4, 4]});
                 const dir = dirs[i % dirs.length];
                 const offset = dir === 'right' ? [12, 0] : [-12, 0];
+                // Dot marker always on map
                 L.marker([site.lat, site.lng], {icon: dot})
-                    .bindTooltip(`▲ ${i+1}. ${site.name}`, {permanent: true, direction: dir, offset: offset, className: 'callout-label'})
                     .bindPopup(`<strong>${site.name}</strong><br><small>${site.lat.toFixed(6)}, ${site.lng.toFixed(6)}</small>`)
                     .addTo(campsiteLayer);
+                // Label on togglable layer
+                const labelDot = L.divIcon({className: '', html: '', iconSize: [1,1], iconAnchor: [0,0]});
+                L.marker([site.lat, site.lng], {icon: labelDot})
+                    .bindTooltip(`▲ ${i+1}. ${site.name}`, {permanent: true, direction: dir, offset: offset, className: 'callout-label'})
+                    .addTo(campsiteLabelLayer);
             });
             updateCampsiteList();
             localStorage.setItem('kirkpatrick-campsites', JSON.stringify(campsites));
@@ -498,39 +507,31 @@
             });
         });
         
-        // Campsite toggle
-        let showCampsites = true;
+        // Campsite toggle — only hides labels, dots stay on map
+        let showCampsiteLabels = true;
         function toggleCampsiteLayer() {
-            showCampsites = !showCampsites;
+            showCampsiteLabels = !showCampsiteLabels;
             const btn = document.getElementById('campsiteToggle');
-            const panel = document.getElementById('campsiteList');
-            if (showCampsites) {
-                map.addLayer(campsiteLayer);
+            if (showCampsiteLabels) {
+                map.addLayer(campsiteLabelLayer);
                 btn.classList.add('active');
-                if (panel) panel.style.display = '';
             } else {
-                map.removeLayer(campsiteLayer);
+                map.removeLayer(campsiteLabelLayer);
                 btn.classList.remove('active');
-                if (panel) panel.style.display = 'none';
             }
         }
         
-        // Portage toggle - controls both overlay lines AND route coloring
-        let showPortages = true;
+        // Portage toggle — only hides distance labels, orange route stays on map
+        let showPortageLabels = true;
         function togglePortageLayer() {
-            showPortages = !showPortages;
+            showPortageLabels = !showPortageLabels;
             const btn = document.getElementById('portageToggle');
-            const panel = document.getElementById('portageList');
-            if (showPortages) {
-                map.addLayer(portageLayer);
-                map.addLayer(portageRouteLayer);
+            if (showPortageLabels) {
+                map.addLayer(portageLabelLayer);
                 btn.classList.add('active');
-                if (panel) panel.style.display = '';
             } else {
-                map.removeLayer(portageLayer);
-                map.removeLayer(portageRouteLayer);
+                map.removeLayer(portageLabelLayer);
                 btn.classList.remove('active');
-                if (panel) panel.style.display = 'none';
             }
         }
         
