@@ -70,8 +70,12 @@
         .north-arrow span:last-child { font-size: 10px; font-weight: 700; margin-top: -2px; }
         .lake-label { background: rgba(33, 150, 243, 0.9); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .campsite-marker { font-size: 22px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-        .campsite-number { width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-bottom: 22px solid #f59e0b; position: relative; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
-        .campsite-number span { position: absolute; top: 6px; left: -4px; font-size: 10px; font-weight: bold; color: #000; width: 8px; text-align: center; }
+        .campsite-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+        .callout-label { background: rgba(20,26,23,0.85) !important; color: #f0fdf4 !important; border: 1px solid #f59e0b !important; border-radius: 4px !important; padding: 2px 6px !important; font-size: 11px !important; font-weight: 500 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.3) !important; white-space: nowrap !important; }
+        .callout-label::before { border-right-color: #f59e0b !important; }
+        .portage-callout { background: rgba(20,26,23,0.85) !important; color: #fca5a5 !important; border: 1px solid #ef4444 !important; border-radius: 4px !important; padding: 2px 6px !important; font-size: 10px !important; font-weight: 500 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.3) !important; white-space: nowrap !important; }
+        .portage-callout::before { border-right-color: #ef4444 !important; }
+        .photo-callout { background: rgba(20,26,23,0.85) !important; color: #93c5fd !important; border: 1px solid #3b82f6 !important; border-radius: 4px !important; padding: 2px 6px !important; font-size: 10px !important; font-weight: 500 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.3) !important; }
         .distance-marker { background: #FF5722; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; font-size: 9px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .start-marker { background: #4CAF50; width: 24px; height: 24px; line-height: 24px; }
         .end-marker { background: #f44336; width: 24px; height: 24px; line-height: 24px; }
@@ -386,9 +390,15 @@
         
         function renderCampsites() {
             campsiteLayer.clearLayers();
+            const dirs = ['right','left','right','left','right','left','right','left'];
             campsites.forEach((site, i) => {
-                const icon = L.divIcon({className: '', html: `<div class="campsite-number"><span>${i+1}</span></div>`, iconSize: [26, 22], iconAnchor: [13, 22]});
-                L.marker([site.lat, site.lng], {icon}).bindPopup(`<strong>${site.name}</strong><br><small>${site.lat.toFixed(6)}, ${site.lng.toFixed(6)}</small>`).addTo(campsiteLayer);
+                const dot = L.divIcon({className: '', html: `<div class="campsite-dot"></div>`, iconSize: [8, 8], iconAnchor: [4, 4]});
+                const dir = dirs[i % dirs.length];
+                const offset = dir === 'right' ? [12, 0] : [-12, 0];
+                L.marker([site.lat, site.lng], {icon: dot})
+                    .bindTooltip(`▲ ${i+1}. ${site.name}`, {permanent: true, direction: dir, offset: offset, className: 'callout-label'})
+                    .bindPopup(`<strong>${site.name}</strong><br><small>${site.lat.toFixed(6)}, ${site.lng.toFixed(6)}</small>`)
+                    .addTo(campsiteLayer);
             });
             updateCampsiteList();
             localStorage.setItem('kirkpatrick-campsites', JSON.stringify(campsites));
@@ -516,10 +526,12 @@
                 const line = L.polyline([[p.startLat, p.startLng], [p.endLat, p.endLng]], {
                     color: '#ef4444', weight: 3, dashArray: '8, 6', opacity: 0.9
                 }).bindPopup(`<strong>Portage ${i+1}</strong><br>${p.distM}m`).addTo(portageLayer);
-                // Midpoint label
+                // Midpoint callout
                 const midLat = (p.startLat + p.endLat) / 2, midLng = (p.startLng + p.endLng) / 2;
-                const icon = L.divIcon({className: '', html: `<div style="background:#ef4444;color:white;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;white-space:nowrap;">${p.distM}m</div>`, iconSize: [50,16], iconAnchor: [25,8]});
-                L.marker([midLat, midLng], {icon}).addTo(portageLayer);
+                const dot = L.divIcon({className: '', html: '', iconSize: [1, 1], iconAnchor: [0, 0]});
+                L.marker([midLat, midLng], {icon: dot})
+                    .bindTooltip(`${p.distM}m`, {permanent: true, direction: i % 2 === 0 ? 'right' : 'left', offset: [8, 0], className: 'portage-callout'})
+                    .addTo(portageLayer);
             });
             updatePortageList();
             localStorage.setItem('kirkpatrick-portages', JSON.stringify(portages));
