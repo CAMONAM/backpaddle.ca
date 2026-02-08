@@ -367,9 +367,9 @@
         // Draw segments
         segments.forEach(seg => {
             if (seg.portage) {
-                L.polyline(seg.points, {color: '#ef4444', weight: 4, opacity: 0.9, dashArray: '8, 6'}).addTo(map);
+                L.polyline(seg.points, {color: '#ef4444', weight: 5, opacity: 0.95, dashArray: '8, 6'}).addTo(map);
             } else {
-                L.polyline(seg.points, {color: '#3b82f6', weight: 4, opacity: 0.8}).addTo(map);
+                L.polyline(seg.points, {color: '#22d3ee', weight: 5, opacity: 0.9}).addTo(map);
             }
         });
         
