@@ -70,7 +70,8 @@
         .north-arrow span:last-child { font-size: 10px; font-weight: 700; margin-top: -2px; }
         .lake-label { background: rgba(33, 150, 243, 0.9); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .campsite-marker { font-size: 22px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-        .campsite-number { background: #f59e0b; color: #000; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 22px; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .campsite-number { width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-bottom: 22px solid #f59e0b; position: relative; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+        .campsite-number span { position: absolute; top: 6px; left: -4px; font-size: 10px; font-weight: bold; color: #000; width: 8px; text-align: center; }
         .distance-marker { background: #FF5722; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; font-size: 9px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .start-marker { background: #4CAF50; width: 24px; height: 24px; line-height: 24px; }
         .end-marker { background: #f44336; width: 24px; height: 24px; line-height: 24px; }
@@ -303,8 +304,67 @@
         // Initialize photo markers
         createPhotoMarkers();
         
-        // Route line
-        L.polyline(routeCoords, {color: '#FF5722', weight: 4, opacity: 0.8}).addTo(map);
+        // Route line - color by paddle (blue) vs portage (red)
+        function nearPoint(coord, point, threshold) {
+            const dlat = coord[0] - point[0], dlng = coord[1] - point[1];
+            return Math.sqrt(dlat*dlat + dlng*dlng) < threshold;
+        }
+        
+        // Build portage zones from defaultPortages
+        const portageZones = defaultPortages.map(p => ({
+            start: [p.startLat, p.startLng],
+            end: [p.endLat, p.endLng]
+        }));
+        
+        // Classify each route point as portage or paddle
+        const T = 0.002; // ~200m threshold for matching
+        let segments = [];
+        let currentSeg = [routeCoords[0]];
+        let inPortage = false;
+        
+        for (let i = 1; i < routeCoords.length; i++) {
+            const pt = routeCoords[i];
+            let isPortage = false;
+            
+            for (const pz of portageZones) {
+                // Check if point is near the line between portage start and end
+                const minLat = Math.min(pz.start[0], pz.end[0]) - T;
+                const maxLat = Math.max(pz.start[0], pz.end[0]) + T;
+                const minLng = Math.min(pz.start[1], pz.end[1]) - T;
+                const maxLng = Math.max(pz.start[1], pz.end[1]) + T;
+                if (pt[0] >= minLat && pt[0] <= maxLat && pt[1] >= minLng && pt[1] <= maxLng) {
+                    // Point-to-line distance check
+                    const dx = pz.end[0] - pz.start[0], dy = pz.end[1] - pz.start[1];
+                    const len2 = dx*dx + dy*dy;
+                    if (len2 > 0) {
+                        const t = Math.max(0, Math.min(1, ((pt[0]-pz.start[0])*dx + (pt[1]-pz.start[1])*dy) / len2));
+                        const projLat = pz.start[0] + t*dx, projLng = pz.start[1] + t*dy;
+                        const dist = Math.sqrt((pt[0]-projLat)**2 + (pt[1]-projLng)**2);
+                        if (dist < T) { isPortage = true; break; }
+                    }
+                }
+            }
+            
+            if (isPortage !== inPortage) {
+                // Transition — close current segment and start new one
+                currentSeg.push(pt);
+                segments.push({ points: currentSeg, portage: inPortage });
+                currentSeg = [pt];
+                inPortage = isPortage;
+            } else {
+                currentSeg.push(pt);
+            }
+        }
+        if (currentSeg.length > 1) segments.push({ points: currentSeg, portage: inPortage });
+        
+        // Draw segments
+        segments.forEach(seg => {
+            if (seg.portage) {
+                L.polyline(seg.points, {color: '#ef4444', weight: 4, opacity: 0.9, dashArray: '8, 6'}).addTo(map);
+            } else {
+                L.polyline(seg.points, {color: '#3b82f6', weight: 4, opacity: 0.8}).addTo(map);
+            }
+        });
         
         // Distance markers
         waypoints.forEach(wp => {
@@ -327,7 +387,7 @@
         function renderCampsites() {
             campsiteLayer.clearLayers();
             campsites.forEach((site, i) => {
-                const icon = L.divIcon({className: '', html: `<div class="campsite-number">${i+1}</div>`, iconSize: [22, 22], iconAnchor: [11, 11]});
+                const icon = L.divIcon({className: '', html: `<div class="campsite-number"><span>${i+1}</span></div>`, iconSize: [26, 22], iconAnchor: [13, 22]});
                 L.marker([site.lat, site.lng], {icon}).bindPopup(`<strong>${site.name}</strong><br><small>${site.lat.toFixed(6)}, ${site.lng.toFixed(6)}</small>`).addTo(campsiteLayer);
             });
             updateCampsiteList();
