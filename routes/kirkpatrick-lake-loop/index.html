@@ -113,7 +113,7 @@
             .panel-handle { display: none; }
         }
     </style>
-<script src="/gate.js"></script>
+<!-- -->
 </head>
 <body>
     <div class="header-bar">
@@ -415,8 +415,7 @@
             });
         });
         
-        // Photo toggle button
-        document.getElementById('photoToggle').addEventListener('click', togglePhotoLayer);
+        // Photo toggle handled in layer-btn loop above
         
         function togglePanel() {
             document.getElementById('infoPanel').classList.toggle('collapsed');
