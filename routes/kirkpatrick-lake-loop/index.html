@@ -127,6 +127,7 @@
                 <a href="../../field-maps/kirkpatrick-lake-loop-field-map.pdf" download class="btn secondary">🗺️ Field Map</a>
                 <button class="btn" id="editBtn" onclick="toggleEditMode()">🏕️ Add Sites</button>
                 <button class="btn" id="portageBtn" onclick="togglePortageMode()">🥾 Add Portage</button>
+                <button class="btn secondary" onclick="resetDefaults()">↩ Reset</button>
             </div>
             
             <div class="layer-toggle">
@@ -371,6 +372,16 @@
         
         function deletePortage(index) {
             portages.splice(index, 1);
+            renderPortages();
+        }
+        
+        function resetDefaults() {
+            if (!confirm('Reset campsites and portages to defaults?')) return;
+            localStorage.removeItem('kirkpatrick-campsites');
+            localStorage.removeItem('kirkpatrick-portages');
+            campsites = JSON.parse(JSON.stringify(defaultCampsites));
+            portages = JSON.parse(JSON.stringify(defaultPortages));
+            renderCampsites();
             renderPortages();
         }
         
