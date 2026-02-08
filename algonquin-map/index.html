@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algonquin Park Canoe Routes — Backpaddle</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body, #map { width: 100%; height: 100%; }
+  
+  .logo-control {
+    background: rgba(255,255,255,0.9);
+    border-radius: 8px;
+    padding: 6px 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .logo-control a { display: flex; align-items: center; text-decoration: none; color: #333; }
+  .logo-control img { height: 32px; margin-right: 8px; }
+  .logo-control span { font-family: system-ui, sans-serif; font-weight: 700; font-size: 14px; color: #5bc0de; }
+
+  .legend-control {
+    background: rgba(255,255,255,0.92);
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    font-family: system-ui, sans-serif;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .legend-control h4 { margin: 0 0 4px; font-size: 13px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-line { width: 24px; height: 3px; border-radius: 2px; }
+  .legend-triangle { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 12px solid #FF8C00; }
+
+  .info-panel {
+    background: rgba(255,255,255,0.95);
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    font-family: system-ui, sans-serif;
+    font-size: 13px;
+    max-width: 280px;
+    display: none;
+  }
+  .info-panel h3 { margin: 0 0 6px; font-size: 15px; color: #2196F3; }
+  .info-panel .camps { margin-top: 6px; }
+  .info-panel .camp-item { padding: 2px 0; color: #555; }
+  .info-panel .camp-icon { color: #FF8C00; margin-right: 4px; }
+
+  .loading-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; font-family: system-ui, sans-serif;
+    flex-direction: column; gap: 12px;
+  }
+  .loading-overlay img { height: 60px; }
+  .loading-overlay span { color: #5bc0de; font-size: 16px; font-weight: 600; }
+
+  .leaflet-popup-content { font-family: system-ui, sans-serif; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="loading" class="loading-overlay">
+  <img src="../assets/backpaddle-logo.png" alt="Backpaddle">
+  <span>Loading Algonquin routes…</span>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(async function() {
+  // Initialize map
+  const map = L.map('map', { zoomControl: true, maxZoom: 17, minZoom: 6 });
+
+  // Base layers
+  const cyclOSM = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+    subdomains: 'abc', maxZoom: 20,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors | <a href="https://www.cyclosm.org/">CyclOSM</a>'
+  });
+  const openTopo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    subdomains: 'abc', maxZoom: 17,
+    attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+  });
+  const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
+  });
+
+  cyclOSM.addTo(map);
+  L.control.layers({ 'CyclOSM': cyclOSM, 'OpenTopoMap': openTopo, 'OpenStreetMap': osm }, null, { position: 'topright' }).addTo(map);
+
+  // Logo control
+  const LogoControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function() {
+      const div = L.DomUtil.create('div', 'logo-control');
+      div.innerHTML = '<a href="/"><img src="../assets/backpaddle-logo.png" alt="Backpaddle"><span>Algonquin Park</span></a>';
+      return div;
+    }
+  });
+  new LogoControl().addTo(map);
+
+  // Legend control
+  const LegendControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd: function() {
+      const div = L.DomUtil.create('div', 'legend-control');
+      div.innerHTML = `
+        <h4>Legend</h4>
+        <div class="legend-item"><div class="legend-line" style="background:#2196F3"></div> Paddle route</div>
+        <div class="legend-item"><div class="legend-line" style="background:#E53935"></div> Portage</div>
+        <div class="legend-item"><div class="legend-triangle"></div> Campsite</div>
+      `;
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    }
+  });
+  new LegendControl().addTo(map);
+
+  // Load data
+  const [segData, lakeData] = await Promise.all([
+    fetch('data/segments.json').then(r => r.json()),
+    fetch('data/lakes.json').then(r => r.json())
+  ]);
+
+  // Draw route segments
+  const bounds = L.latLngBounds();
+  const waterLayer = L.layerGroup();
+  const portageLayer = L.layerGroup();
+
+  segData.forEach(seg => {
+    if (!seg.c || seg.c.length === 0) return;
+    const isPortage = seg.t === '2';
+    const color = isPortage ? '#E53935' : '#2196F3';
+    const weight = isPortage ? 3 : 2.5;
+    const opacity = isPortage ? 0.9 : 0.7;
+
+    seg.c.forEach(line => {
+      if (line.length < 2) return;
+      const latlngs = line.map(p => [p[1], p[0]]);
+      const polyline = L.polyline(latlngs, { color, weight, opacity });
+      
+      if (isPortage && seg.l > 0) {
+        polyline.bindPopup(`<b>Portage</b><br>${Math.round(seg.l)}m`);
+      }
+      
+      polyline.addTo(isPortage ? portageLayer : waterLayer);
+      latlngs.forEach(ll => bounds.extend(ll));
+    });
+  });
+
+  waterLayer.addTo(map);
+  portageLayer.addTo(map);
+
+  // Draw lake polygons and campsites
+  const lakeLayer = L.layerGroup();
+  const campLayer = L.layerGroup();
+
+  // Campsite triangle icon
+  const campIcon = L.divIcon({
+    className: '',
+    html: '<svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,2 14,14 2,14" fill="#FF8C00" stroke="#c46600" stroke-width="1"/></svg>',
+    iconSize: [16, 16],
+    iconAnchor: [8, 14]
+  });
+
+  lakeData.forEach(lake => {
+    // Lake polygon
+    if (lake.poly && lake.poly.length > 2) {
+      const latlngs = lake.poly.map(p => [p[1], p[0]]);
+      const polygon = L.polygon(latlngs, {
+        color: '#2196F3', weight: 1, opacity: 0.3,
+        fillColor: '#90CAF9', fillOpacity: 0.15
+      });
+      
+      let popupHtml = `<b>${lake.n}</b>`;
+      if (lake.camps.length > 0) {
+        popupHtml += `<br><small>${lake.camps.length} campsite${lake.camps.length>1?'s':''}:</small><br>`;
+        lake.camps.forEach(c => { popupHtml += `<span style="color:#FF8C00">▲</span> ${c}<br>`; });
+      }
+      polygon.bindPopup(popupHtml);
+      polygon.addTo(lakeLayer);
+    }
+
+    // Campsite markers
+    if (lake.camps.length > 0 && lake.cy && lake.cx) {
+      let popupHtml = `<b>${lake.n}</b><br>`;
+      lake.camps.forEach(c => { popupHtml += `<span style="color:#FF8C00">▲</span> ${c}<br>`; });
+      
+      const marker = L.marker([lake.cy, lake.cx], { icon: campIcon });
+      marker.bindPopup(popupHtml);
+      marker.addTo(campLayer);
+    }
+  });
+
+  lakeLayer.addTo(map);
+  campLayer.addTo(map);
+
+  // Add overlay controls
+  L.control.layers(null, {
+    'Paddle Routes': waterLayer,
+    'Portages': portageLayer,
+    'Lakes': lakeLayer,
+    'Campsites': campLayer
+  }, { position: 'topright', collapsed: true }).addTo(map);
+
+  // Fit bounds
+  if (bounds.isValid()) {
+    map.fitBounds(bounds, { padding: [20, 20] });
+  }
+
+  // Hide loading
+  document.getElementById('loading').style.display = 'none';
+})();
+</script>
+</body>
+</html>
