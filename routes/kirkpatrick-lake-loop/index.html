@@ -92,6 +92,12 @@
         
         .export-box { margin-top: 12px; padding: 10px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 100px; overflow-y: auto; color: var(--text-dim); }
         
+        .photo-popup img { max-width: 280px; border-radius: 8px; }
+        .photo-popup { text-align: center; }
+        .photo-popup .date { color: var(--text-dim); font-size: 12px; margin: 8px 0 4px 0; }
+        .photo-popup .caption { color: var(--text); font-size: 13px; margin: 4px 0; }
+        .photo-marker { font-size: 20px; }
+        
         @media (min-width: 600px) {
             .info-panel { top: 60px; bottom: auto; left: auto; right: 15px; width: 320px; border-radius: 12px; max-height: calc(100vh - 80px); border: 1px solid var(--card-border); }
             .info-panel.collapsed { transform: translateY(0); }
@@ -134,6 +140,7 @@
                 <button class="layer-btn active" data-layer="cyclosm">CyclOSM</button>
                 <button class="layer-btn" data-layer="topo">Topo</button>
                 <button class="layer-btn" data-layer="satellite">Satellite</button>
+                <button class="layer-btn active" id="photoToggle">📷 Photos</button>
             </div>
             
             <div class="campsite-list" id="campsiteList">
@@ -172,6 +179,21 @@
             // Lake labels removed per user preference
         ];
         
+        // Photo gallery data
+        const photos = [
+            {lat: 46.673456, lng: -83.094842, photo: "photo-01.jpg", date: "2025-05-31", caption: "Dog (Indy) portrait at sunset - Kirkpatrick North Arm"},
+            {lat: 46.687389, lng: -83.145147, photo: "photo-02.jpg", date: "2024-07-07", caption: "Dog in canoe, calm lake"},
+            {lat: 46.687389, lng: -83.145147, photo: "photo-03.jpg", date: "2024-07-07", caption: "Lake shoreline view"},
+            {lat: 46.687389, lng: -83.145147, photo: "photo-04.jpg", date: "2024-07-07", caption: "Brook trout catch"},
+            {lat: 46.687372, lng: -83.145019, photo: "photo-05.jpg", date: "2024-07-07", caption: "Canoe sunset with dog"},
+            {lat: 46.687372, lng: -83.145019, photo: "photo-06.jpg", date: "2024-07-07", caption: "Dog in canoe, pink sunset"},
+            {lat: 46.733981, lng: -83.143081, photo: "photo-07.jpg", date: "2025-05-29", caption: "Campfire with dog - Pointer/Finn Portage"},
+            {lat: 46.733981, lng: -83.143081, photo: "photo-08.jpg", date: "2025-05-29", caption: "Campfire, dog sleeping - Pointer/Finn Portage"},
+            {lat: 46.707925, lng: -83.172081, photo: "photo-09.jpg", date: "2025-05-30", caption: "Trout on fire grill - Olde Town Line"},
+            {lat: 46.673456, lng: -83.094842, photo: "photo-10.jpg", date: "2025-05-31", caption: "Inukshuk on rock with dog"},
+            {lat: 46.673394, lng: -83.094858, photo: "photo-11.jpg", date: "2025-05-31", caption: "Brown dog watching sunset - Kirkpatrick North Arm"}
+        ];
+        
         // Campsites - load from localStorage or use defaults
         // Default campsites (can be overridden by localStorage)
         const defaultCampsites = [
@@ -196,6 +218,90 @@
         const map = L.map('map', {center: [46.72, -83.12], zoom: 11, layers: [cyclosm], zoomControl: false});
         L.control.zoom({position: 'topleft'}).addTo(map);
         L.control.scale({imperial: false, position: 'bottomleft'}).addTo(map);
+        
+        // Photo layer
+        const photoLayer = L.layerGroup().addTo(map);
+        let showPhotos = true;
+        
+        function createPhotoMarkers() {
+            photoLayer.clearLayers();
+            
+            // Group photos by location
+            const photoGroups = {};
+            photos.forEach(photo => {
+                const key = `${photo.lat.toFixed(6)},${photo.lng.toFixed(6)}`;
+                if (!photoGroups[key]) photoGroups[key] = [];
+                photoGroups[key].push(photo);
+            });
+            
+            Object.entries(photoGroups).forEach(([coords, groupPhotos]) => {
+                const [lat, lng] = coords.split(',').map(Number);
+                
+                if (groupPhotos.length === 1) {
+                    // Single photo
+                    const photo = groupPhotos[0];
+                    const marker = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'photo-marker',
+                            html: '📷',
+                            iconSize: [25, 25],
+                            iconAnchor: [12, 12]
+                        })
+                    });
+                    
+                    const popupContent = `
+                        <div class="photo-popup">
+                            <img src="photos/${photo.photo}" alt="${photo.caption}" />
+                            <div class="date">${photo.date}</div>
+                            <div class="caption">${photo.caption}</div>
+                        </div>
+                    `;
+                    marker.bindPopup(popupContent, {maxWidth: 320}).addTo(photoLayer);
+                } else {
+                    // Multiple photos - offset slightly and create gallery popup
+                    groupPhotos.forEach((photo, i) => {
+                        const offsetLat = lat + (i - Math.floor(groupPhotos.length/2)) * 0.0001;
+                        const offsetLng = lng + (i - Math.floor(groupPhotos.length/2)) * 0.0001;
+                        
+                        const marker = L.marker([offsetLat, offsetLng], {
+                            icon: L.divIcon({
+                                className: 'photo-marker',
+                                html: '📷',
+                                iconSize: [25, 25],
+                                iconAnchor: [12, 12]
+                            })
+                        });
+                        
+                        const popupContent = `
+                            <div class="photo-popup">
+                                <img src="photos/${photo.photo}" alt="${photo.caption}" />
+                                <div class="date">${photo.date}</div>
+                                <div class="caption">${photo.caption}</div>
+                                <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">
+                                    ${i + 1} of ${groupPhotos.length} photos at this location
+                                </div>
+                            </div>
+                        `;
+                        marker.bindPopup(popupContent, {maxWidth: 320}).addTo(photoLayer);
+                    });
+                }
+            });
+        }
+        
+        function togglePhotoLayer() {
+            showPhotos = !showPhotos;
+            const btn = document.getElementById('photoToggle');
+            if (showPhotos) {
+                map.addLayer(photoLayer);
+                btn.classList.add('active');
+            } else {
+                map.removeLayer(photoLayer);
+                btn.classList.remove('active');
+            }
+        }
+        
+        // Initialize photo markers
+        createPhotoMarkers();
         
         // Route line
         L.polyline(routeCoords, {color: '#FF5722', weight: 4, opacity: 0.8}).addTo(map);
@@ -283,13 +389,20 @@
         // Layer switching
         document.querySelectorAll('.layer-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+                if (btn.id === 'photoToggle') {
+                    togglePhotoLayer();
+                    return;
+                }
+                document.querySelectorAll('.layer-btn[data-layer]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 map.removeLayer(layers[currentLayer]);
                 layers[btn.dataset.layer].addTo(map);
                 currentLayer = btn.dataset.layer;
             });
         });
+        
+        // Photo toggle button
+        document.getElementById('photoToggle').addEventListener('click', togglePhotoLayer);
         
         function togglePanel() {
             document.getElementById('infoPanel').classList.toggle('collapsed');
