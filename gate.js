@@ -37,7 +37,7 @@
       #bp-gate .hint { color: #94a3b8; font-size: 13px; }
       #bp-gate .error { color: #E53935; font-size: 13px; display: none; }
     </style>
-    <img src="/assets/backpaddle-paddles.png" alt="">
+    <img src="/assets/backpaddle-logo-new.png" alt="">
     <h1>Back<span>paddle</span></h1>
     <input type="password" id="bp-pass" placeholder="Enter password" autofocus>
     <div class="error" id="bp-error">Wrong password</div>
