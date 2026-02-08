@@ -504,7 +504,7 @@
             portageLayer.clearLayers();
             portages.forEach((p, i) => {
                 const line = L.polyline([[p.startLat, p.startLng], [p.endLat, p.endLng]], {
-                    color: '#ef4444', weight: 3, dashArray: '8, 6', opacity: 0.9
+                    color: '#ef4444', weight: 5, dashArray: '8, 6', opacity: 1
                 }).bindPopup(`<strong>Portage ${i+1}</strong><br>${p.distM}m`).addTo(portageLayer);
                 // Midpoint callout
                 const midLat = (p.startLat + p.endLat) / 2, midLng = (p.startLng + p.endLng) / 2;
@@ -576,6 +576,7 @@
         // Init
         renderCampsites();
         renderPortages();
+        portageLayer.bringToFront();
         if (window.innerWidth < 600) {
             document.getElementById('infoPanel').classList.add('collapsed');
         }
